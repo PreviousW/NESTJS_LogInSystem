@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ObjectId } from "mongodb";
 import { SessionDocument } from "./dto/session.dto";
 import { UserDocument } from "./dto/user.dto";
+import { createHash } from "crypto";
 
 @Injectable() 
 export class UserService {
@@ -19,7 +20,7 @@ export class UserService {
         return doc
     }
 
-    async createUser(nickname: string, name: string, age: number, email: string) {
+    async createUser(id: string, pw: string, nickname: string, name: string, age: number, email: string, role: string) {
         const check = await this.mongoService.hasAlready({nickname: nickname})
         console.log(check)
 
@@ -28,11 +29,11 @@ export class UserService {
         }
 
         let uid = Math.floor(Math.random() * (9999999999 - 1074318421 + 1)) + 1
-        const uidValidationCheck = await this.mongoService.hasAlready({nickname: nickname})
+        const uidValidationCheck = await this.mongoService.hasAlready({uid: uid})
         
         while (uidValidationCheck) { uid = Math.floor(Math.random() * (9999999999 - 1074318421 + 1)) + 1 }
         console.log({nickname: nickname, name: name, age: age, email: email, uid: uid})
-        this.mongoService.upsertOne({nickname: nickname}, {nickname: nickname, name: name, age: age, email: email, uid: uid})
+        this.mongoService.upsertOne({nickname: nickname}, {nickname: nickname, name: name, age: age, email: email, uid: uid, id: id, pw: pw, role: role})
 
     }
 
@@ -51,12 +52,23 @@ export class UserService {
     }
 
     async getSession(sessionId: string): Promise<SessionDocument | null> {
-        return await this.mongoService.db.collection("sessions").findOne({ sessionId }) as SessionDocument
+        const doc = await this.mongoService.db.collection("sessions").findOne({ sessionId })
+        if (doc != null) {
+            return doc as SessionDocument
+        } else {
+            return null
+        }
     }
 
     async deleteSession(sessionId: string) {
         await this.mongoService.db.collection("sessions").deleteOne({ sessionId });
     }
 
+    async encodeAndHash(key: string): Promise<string> {
+        const b64Encoded = Buffer.from(key).toString('base64');
+        const trimmedKey = b64Encoded.slice(0, -3);
+        const hash = createHash('sha256').update(trimmedKey).digest('hex');
+        return hash.slice(0, -1);
+    }
 
 }
