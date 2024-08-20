@@ -10,4 +10,5 @@ export class UserDocument {
     readonly email: string;
     readonly age: number;
     readonly role: string;
+    readonly token: string;
 }

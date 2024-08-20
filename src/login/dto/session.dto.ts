@@ -5,4 +5,5 @@ export class SessionDocument {
     readonly sessionId: string;
     readonly uid: string;
     readonly createdAt: Date;
+    readonly token: string;
 }

@@ -36,10 +36,42 @@ export class UserService {
         let uid = Math.floor(Math.random() * (9999999999 - 1074318421 + 1)) + 1
         const uidValidationCheck = await this.mongoService.hasAlready({uid: uid})
         
+        let tkn = await this.generateRandomString(80)
+        const tknValidationCheck = await this.mongoService.hasAlready({token: tkn})
+        
         while (uidValidationCheck) { uid = Math.floor(Math.random() * (9999999999 - 1074318421 + 1)) + 1 }
-        console.log({nickname: nickname, name: name, age: age, email: email, uid: uid})
-        this.mongoService.upsertOne({nickname: nickname}, {nickname: nickname, name: name, age: age, email: email, uid: uid, id: id, pw: pw, role: role})
+        while (tknValidationCheck) { tkn = await this.generateRandomString(80) }
+        console.log({nickname: nickname, name: name, age: age, email: email, uid: uid, token: tkn})
+        this.mongoService.upsertOne(
+            {
+                nickname: nickname
+            },
 
+            {
+                nickname: nickname,
+                name: name,
+                age: age,
+                email: email,
+                uid: uid,
+                id: id,
+                pw: pw,
+                role: role,
+                token: tkn
+            }
+        )
+
+    }
+
+    async generateRandomString(length: number): Promise<string> {
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let result = '';
+        const charactersLength = characters.length;
+        
+        for (let i = 0; i < length; i++) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        
+        return result;
     }
 
 
@@ -50,6 +82,7 @@ export class UserService {
         this.mongoService.db.collection("sessions").insertOne({
             sessionId,
             uid,
+            token: (await this.getUserByUid(uid)).token,
             createdAt: new Date(),
         });
 
