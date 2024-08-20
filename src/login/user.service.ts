@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ObjectId } from "mongodb";
 import { SessionDocument } from "./dto/session.dto";
 import { UserDocument } from "./dto/user.dto";
-import { createHash } from "crypto";
+import { createHash, randomBytes } from "crypto";
 
 @Injectable() 
 export class UserService {
@@ -12,6 +12,11 @@ export class UserService {
 
     async getUidByNickName(nickname: string): Promise<string> {
         const doc = await this.mongoService.findOne({nickname: nickname});
+        return doc.uid
+    }
+
+    async getUidById(id: string): Promise<string> {
+        const doc = await this.mongoService.findOne({id: id});
         return doc.uid
     }
 
@@ -70,5 +75,7 @@ export class UserService {
         const hash = createHash('sha256').update(trimmedKey).digest('hex');
         return hash.slice(0, -1);
     }
+
+  
 
 }
